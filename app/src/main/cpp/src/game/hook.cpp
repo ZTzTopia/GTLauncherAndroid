@@ -43,7 +43,7 @@ INSTALL_HOOK(LogMsg, void, const char* msg, ...)
 
     __android_log_print(
         ANDROID_LOG_INFO,
-        reinterpret_cast<const char* (__cdecl*)()>(DobbySymbolResolver(nullptr, "_Z10GetAppNamev"))(),
+        reinterpret_cast<const char* (*)()>(DobbySymbolResolver(nullptr, "_Z10GetAppNamev"))(),
         "%s", buffer
     );
 }
@@ -61,42 +61,18 @@ INSTALL_HOOK(SendPacket, void, int message_type, gnu::string& message, void* ene
     orig_SendPacket(message_type, message, enet_peer);
 }
 
-struct BoostSignal {
-    void* pad; // 0
-    void* pad2; // 8
-    void* pad3; // 16
-    // ARM64 size!
-};
-
-struct BaseApp {
-    BoostSignal pad[18]; // 0
-    void* pad2; // 432
-    bool consoleVisible; // 440
-    bool fpsVisible; // 441
-    // ARM64 size!
-};
-
-INSTALL_HOOK(BaseApp__Draw, void, BaseApp* thiz)
-{
-    thiz->fpsVisible = true;
-    orig_BaseApp__Draw(thiz);
-}
-
 namespace game {
-    namespace hook {
-        void init()
-        {
-            // set Dobby logging level.
-            log_set_level(0);
+namespace hook {
+void init()
+{
+    // set Dobby logging level.
+    log_set_level(0);
 
-            // LogMsg(char const*,...)
-            install_hook_LogMsg("_Z6LogMsgPKcz");
+    // LogMsg(char const*,...)
+    install_hook_LogMsg("_Z6LogMsgPKcz");
 
-            // SendPacket(eNetMessageType,std::string const&,_ENetPeer *)
-            install_hook_SendPacket("_Z10SendPacket15eNetMessageTypeRKSsP9_ENetPeer");
-
-            // BaseApp::Draw(void)
-            install_hook_BaseApp__Draw("_ZN7BaseApp4DrawEv");
-        }
-    }
+    // SendPacket(eNetMessageType,std::string const&,_ENetPeer *)
+    install_hook_SendPacket("_Z10SendPacket15eNetMessageTypeRKSsP9_ENetPeer");
 }
+} // hook
+} // game
